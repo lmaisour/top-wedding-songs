@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Top Wedding Songs</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f0f0f0;
+      text-align: center;
+    }
+
+    h1 {
+      color: #333;
+      margin: 40px;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      /* Creates five columns */
+      gap: 20px;
+      padding: 20px;
+      justify-content: center;
+    }
+
+    @media (max-width: 1200px) {
+      .container {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    @media (max-width: 992px) {
+      .container {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 576px) {
+      .container {
+        grid-template-columns: repeat(1, 1fr);
+      }
+    }
+
+
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+    }
+
+    .card-content {
+      padding: 15px;
+    }
+
+    .card-title {
+      font-size: 0.9em;
+      margin-bottom: 0.5em;
+      white-space: nowrap;
+      /* Keeps the text on a single line */
+      overflow: hidden;
+      /* Ensures the overflow text is hidden */
+      text-overflow: ellipsis;
+      /* Adds an ellipsis to signify there's more text */
+      cursor: pointer;
+      /* Changes the cursor to indicate the text is interactive */
+
+    }
+
+    .card-title:hover {
+      overflow: visible;
+    }
+
+    .card-text {
+      font-size: 0.9em;
+      color: #666;
+    }
+
+    .card-footer {
+      background-color: #f7f7f7;
+      padding: 10px 15px;
+      font-size: 0.8em;
+      color: #888;
+      border-top: 1px solid #eaeaea;
+    }
+
+    .no-songs {
+      grid-column: 1 / -1;
+      text-align: center;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 20px 0;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .select-wrapper {
+      display: inline-block;
+      margin: 0 10px;
+    }
+
+    .select-wrapper select {
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      background: white;
+      color: black;
+      font-size: 16px;
+    }
+
+    .select-wrapper select option {
+      padding: 5px;
+    }
+
+    #paginationContainer {
+      display: flex;
+      justify-content: center;
+      margin-top: 5px;
+    }
+
+    #paginationContainer button {
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      color: #495057;
+      cursor: pointer;
+      margin: 0 5px;
+      padding: 5px 10px;
+    }
+
+    #paginationContainer button.active {
+      background-color: #495057;
+      color: #f8f9fa;
+    }
+
+    #paginationContainer button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    #pageSize {
+      padding: 5px;
+      margin: 5px;
+    }
+
+    #overlay {
+      background: rgba(0, 0, 0, 0.5);
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .loader {
+      border: 16px solid #f3f3f3;
+      border-radius: 50%;
+      border-top: 16px solid #3498db;
+      width: 120px;
+      height: 120px;
+      -webkit-animation: spin 2s linear infinite;
+      /* Safari */
+      animation: spin 2s linear infinite;
+    }
+
+    /* Safari */
+    @-webkit-keyframes spin {
+      0% {
+        -webkit-transform: rotate(0deg);
+      }
+
+      100% {
+        -webkit-transform: rotate(360deg);
+      }
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
+    <h1>Top Wedding Songs</h1>
+    <div>
+      <div class="select-wrapper">
+        <select id="yearFilter" onchange="getWeddingSongs()">
+          <option value="">All Years</option>
+          <!-- Add options for each year here -->
+        </select>
+      </div>
+      <div class="select-wrapper">
+        <select id="genreFilter" onchange="getWeddingSongs()">
+          <option value="">All Genres</option>
+          <!-- Add options for each genre here -->
+        </select>
+      </div>
+      <!-- <button onclick="getWeddingSongs()">Get Songs from Spotify</button> -->
+    </div>
+  </div>
+  <div id="overlay">
+    <div class="loader"></div>
+  </div>
+  <div class="container" id="songsContainer">
+    <!-- Songs will be added here -->
+  </div>
+  <div class="select-wrapper">
+    <select id="pageSize" onchange="changePageSize()">
+      <option value="10">10 songs per page</option>
+      <option value="5">5 songs per page</option>
+      <option value="15">15 songs per page</option>
+      <option value="20">20 songs per page</option>
+    </select>
+    <div id="paginationContainer" style="float:right"></div>
+  </div>
+
+  <script>
+    function createCard(song) {
+      return `
+        <div class="card">
+          <img src="${song.imageUrl}" alt="Song Image">
+          <div class="card-content">
+            <h3 class="card-title" title="${song.name}">${song.name}</h3>
+            <p class="card-text">by ${song.artist}</p>
+          </div>
+          <div class="card-footer">
+            Genre: ${song.genre ? song.genre : 'NA'} <br>
+            Year: ${song.year}
+          </div>
+        </div>
+      `;
+    }
+
+    function displaySongs(songs) {
+      const container = $('#songsContainer');
+      container.empty();
+
+      if (songs.length === 0) {
+        container.append('<div class="no-songs">No songs available. Please fetch songs.</div>');
+      } else {
+        songs.forEach(song => {
+          container.append(createCard(song));
+        });
+      }
+    }
+    function capitalizeWords(str) {
+      return str.replace(/-/g, ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    }
+
+    function populateDropdowns() {
+      fetch('/genres')
+        .then(response => response.json())
+        .then(genres => {
+          const genreDropdown = $('#genreFilter');
+          genres.forEach(genre => {
+            if (genre) { // Check if genre is not null or undefined
+              const capitalizedGenre = capitalizeWords(genre);
+              genreDropdown.append(`<option value="${genre}">${capitalizedGenre}</option>`);
+            }
+          });
+        });
+
+      fetch('/years')
+        .then(response => response.json())
+        .then(years => {
+          const yearDropdown = $('#yearFilter');
+          years.sort((a, b) => b - a); // Sort years in descending order
+          years.forEach(year => {
+            if (year) { // Check if year is not null or undefined
+              yearDropdown.append(`<option value="${year}">${year}</option>`);
+            }
+          });
+        });
+    }
+
+    function getPageSize() {
+      return parseInt(localStorage.getItem('pageSize')) || 10;
+    }
+
+    function getWeddingSongs(page = 1) {
+      $('#overlay').css('display', 'flex'); // Show overlay
+      const pageSize = getPageSize();
+      const year = $('#yearFilter').val();
+      const genre = $('#genreFilter').val();
+      let url = `/songs?page=${page}&pageSize=${pageSize}`;
+      if (year) {
+        url += `&year=${year}`;
+      }
+      if (genre) {
+        url += `&genre=${genre}`;
+      }
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          displaySongs(data.songs);
+          createPagination(data.totalPages, page);
+          // Update h1 text
+          const h1 = $('h1');
+          if (genre && genre !== 'All Genres') {
+            const capitalizedGenre = capitalizeWords(genre);
+            h1.text(`Top ${capitalizedGenre} Wedding Songs`);
+          } else {
+            h1.text('Top Wedding Songs');
+          }
+          $('#overlay').hide(); // Hide overlay
+        });
+    }
+
+    function createPagination(totalPages, currentPage) {
+      const paginationContainer = $('#paginationContainer');
+      paginationContainer.empty();
+
+      const leftArrow = $(`<button>&laquo;</button>`);
+      leftArrow.click(() => getWeddingSongs(currentPage - 1));
+      paginationContainer.append(leftArrow);
+
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+          const button = $(`<button>${i}</button>`);
+          if (i === currentPage) {
+            button.addClass('active');
+          }
+          button.click(() => getWeddingSongs(i));
+          paginationContainer.append(button);
+        } else if (i === currentPage - 3 || i === currentPage + 3) {
+          paginationContainer.append('<span>...</span>');
+        }
+      }
+
+      const rightArrow = $(`<button>&raquo;</button>`);
+      rightArrow.click(() => getWeddingSongs(currentPage + 1));
+      paginationContainer.append(rightArrow);
+
+      if (currentPage === 1) {
+        leftArrow.attr('disabled', 'disabled');
+      }
+      if (currentPage === totalPages) {
+        rightArrow.attr('disabled', 'disabled');
+      }
+    }
+    function changePageSize() {
+      const pageSize = $('#pageSize').val();
+      localStorage.setItem('pageSize', pageSize);
+      getWeddingSongs();
+    }
+    $(document).ready(function () {
+      const pageSize = getPageSize();
+      if (pageSize) {
+        $('#pageSize').val(pageSize);
+      }
+      populateDropdowns(); // Populate dropdowns on page load
+      getWeddingSongs(); // Load songs on page load
+    });
+  </script>
+</body>
+
+</html>
