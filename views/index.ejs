@@ -18,6 +18,7 @@
     h1 {
       color: #333;
       margin: 40px;
+      margin-right: auto;
     }
 
     .container {
@@ -105,16 +106,6 @@
     .no-songs {
       grid-column: 1 / -1;
       text-align: center;
-    }
-
-    button {
-      padding: 10px 20px;
-      margin: 20px 0;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
     }
 
     .select-wrapper {
@@ -213,23 +204,41 @@
 
 <body>
 
-  <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
+  <div style="display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 0 20px;">
     <h1>Top Wedding Songs</h1>
     <div>
+      <button onclick="window.location.href='/'">Most Popular Songs</button>
+      <button onclick="window.location.href='/most-popular-country-wedding-songs'">Most Popular Country Wedding
+        Songs</button>
+      <button onclick="window.location.href='/most-popular-rnb-wedding-songs'">Most Popular R&B Wedding Songs</button>
+      <button onclick="window.location.href='/most-popular-hip-hop-wedding-songs'">Most Popular Hip Hop Wedding
+        Songs</button>
+      <button onclick="window.location.href='/most-popular-rock-wedding-songs'">Most Popular Rock Wedding Songs</button>
+      <button onclick="window.location.href='/most-popular-jazz-wedding-songs'">Most Popular Jazz Wedding Songs</button>
+      <button onclick="window.location.href='/most-popular-pop-wedding-songs'">Most Popular Pop Wedding Songs</button>
+      <button onclick="window.location.href='/most-popular-jazz-wedding-songs'">Most Popular Jazz Wedding
+        Songs</button>
+      <button onclick="window.location.href='/most-popular-reggae-wedding-songs'">Most Popular Reggae Wedding
+        Songs</button>
+      <button onclick="window.location.href='/most-popular-classical-wedding-songs'">Most Popular Classical
+        Wedding Songs</button>
+      <!-- Add more buttons for other genres -->
+    </div>
+    <!-- <div>
       <div class="select-wrapper">
         <select id="yearFilter" onchange="getWeddingSongs()">
           <option value="">All Years</option>
-          <!-- Add options for each year here -->
+          
         </select>
       </div>
       <div class="select-wrapper">
         <select id="genreFilter" onchange="getWeddingSongs()">
           <option value="">All Genres</option>
-          <!-- Add options for each genre here -->
+          
         </select>
       </div>
-      <!-- <button onclick="getWeddingSongs()">Get Songs from Spotify</button> -->
-    </div>
+      <button onclick="getWeddingSongs()">Get Songs from Spotify</button>
+    </div> -->
   </div>
   <div id="overlay">
     <div class="loader"></div>
@@ -237,7 +246,7 @@
   <div class="container" id="songsContainer">
     <!-- Songs will be added here -->
   </div>
-  <div class="select-wrapper">
+  <!-- <div class="select-wrapper">
     <select id="pageSize" onchange="changePageSize()">
       <option value="10">10 songs per page</option>
       <option value="5">5 songs per page</option>
@@ -245,7 +254,7 @@
       <option value="20">20 songs per page</option>
     </select>
     <div id="paginationContainer" style="float:right"></div>
-  </div>
+  </div> -->
 
   <script>
     function createCard(song) {

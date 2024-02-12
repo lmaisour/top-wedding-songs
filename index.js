@@ -162,5 +162,65 @@ app.get('/', async (req, res) => {
     res.status(500).send('An error occurred');
   }
 });
+// Function to fetch songs based on genre
+async function getSongsByGenre(genre) {
+  try {
+    const regex = new RegExp(genre, 'i'); // Create a case-insensitive regex
+    const songs = await db.collection('songs')
+      .find({ genre: regex }) // Use the regex in the query
+      .sort({ popularity: -1 })
+      .limit(10)
+      .toArray();
+    return songs;
+  } catch (error) {
+    console.error(`Failed to fetch songs: ${error}`);
+    return [];
+  }
+}
 
+// Routes for each genre
+app.get('/most-popular-country-wedding-songs', async (req, res) => {
+  const songs = await getSongsByGenre('country');
+  res.render('songs', { title: 'Most Popular Country Wedding Songs', songs: songs });
+});
+
+app.get('/most-popular-rnb-wedding-songs', async (req, res) => {
+  const songs = await getSongsByGenre('r&b');
+  res.render('songs', { title: 'Most Popular R&B Wedding Songs', songs: songs });
+});
+
+app.get('/most-popular-hip-hop-wedding-songs', async (req, res) => {
+  const songs = await getSongsByGenre('hip hop');
+  res.render('songs', { title: 'Most Popular Hip Hop Wedding Songs', songs: songs });
+});
+
+app.get('/most-popular-rock-wedding-songs', async (req, res) => {
+  const songs = await getSongsByGenre('rock');
+  res.render('songs', { title: 'Most Popular Rock Wedding Songs', songs: songs });
+});
+
+app.get('/most-popular-jazz-wedding-songs', async (req, res) => {
+  const songs = await getSongsByGenre('jazz');
+  res.render('songs', { title: 'Most Popular Jazz Wedding Songs', songs: songs });
+});
+
+app.get('/most-popular-pop-wedding-songs', async (req, res) => {
+  const songs = await getSongsByGenre('pop');
+  res.render('songs', { title: 'Most Popular Pop Wedding Songs', songs: songs });
+});
+
+app.get('/most-popular-jazz-wedding-songs', async (req, res) => {
+  const songs = await getSongsByGenre('jazz');
+  res.render('songs', { title: 'Most Popular Jazz Wedding Songs', songs: songs });
+});
+
+app.get('/most-popular-reggae-wedding-songs', async (req, res) => {
+  const songs = await getSongsByGenre('reggae');
+  res.render('songs', { title: 'Most Popular Reggae Wedding Songs', songs: songs });
+});
+
+app.get('/most-popular-classical-wedding-songs', async (req, res) => {
+  const songs = await getSongsByGenre('classical');
+  res.render('songs', { title: 'Most Popular Classical Wedding Songs', songs: songs });
+});
 app.listen(9000, () => console.log('App is listening on port 9000'));
