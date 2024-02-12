@@ -219,8 +219,5 @@ app.get('/most-popular-reggae-wedding-songs', async (req, res) => {
   res.render('songs', { title: 'Most Popular Reggae Wedding Songs', songs: songs });
 });
 
-app.get('/most-popular-classical-wedding-songs', async (req, res) => {
-  const songs = await getSongsByGenre('classical');
-  res.render('songs', { title: 'Most Popular Classical Wedding Songs', songs: songs });
-});
+return res.render('index', { message: 'No songs available' });
 app.listen(9000, () => console.log('App is listening on port 9000'));
