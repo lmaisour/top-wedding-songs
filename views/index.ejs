@@ -293,7 +293,12 @@
     </div>
   <% }); %>
   <script>
-    function createCard(song) {
+    function createCard(song,i) {
+      if(i>8){
+        return `<div class="card see-more-card">
+        <a href="/top-wedding-songs">See More</a>
+      </div>`
+      }
       return `
         <div class="card">
           <img src="${song.imageUrl}" alt="Song Image">
@@ -316,8 +321,8 @@
       if (songs.length === 0) {
         container.append('<div class="no-songs">No songs available. Please fetch songs.</div>');
       } else {
-        songs.forEach(song => {
-          container.append(createCard(song));
+        songs.forEach((song, i) => {
+          container.append(createCard(song, i));
         });
       }
     }

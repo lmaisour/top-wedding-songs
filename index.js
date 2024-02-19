@@ -183,6 +183,14 @@ async function getSongsByGenre(genre, limit = 9) {
 }
 
 // Routes for each genre
+app.get('/top-wedding-songs', async (req, res) => {
+  const songs = await db.collection('songs')
+  .find()
+  .sort({ popularity: -1 })
+  .limit(25)
+  .toArray();
+  res.render('songs', { title: 'Top Wedding Songs', songs: songs });
+});
 app.get('/most-popular-country-wedding-songs', async (req, res) => {
   const songs = await getSongsByGenre('country',25);
   res.render('songs', { title: 'Most Popular Country Wedding Songs', songs: songs });
