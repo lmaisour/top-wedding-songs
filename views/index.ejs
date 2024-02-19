@@ -16,6 +16,7 @@
     }
 
     h1 {
+      display: flex;
       color: #333;
       margin: 40px;
       margin-right: auto;
@@ -199,6 +200,23 @@
         transform: rotate(360deg);
       }
     }
+    .see-more-card {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 317px;
+    padding: 1em;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+    text-align: center;
+  }
+
+  .see-more-card a {
+    text-decoration: none;
+    color: #333;
+    font-weight: bold;
+  }
   </style>
 </head>
 
@@ -206,7 +224,7 @@
 
   <div style="display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 0 20px;">
     <h1>Top Wedding Songs</h1>
-    <div>
+    <!-- <div>
       <button onclick="window.location.href='/'">Most Popular Songs</button>
       <button onclick="window.location.href='/most-popular-country-wedding-songs'">Most Popular Country Wedding
         Songs</button>
@@ -221,8 +239,7 @@
       <button onclick="window.location.href='/most-popular-reggae-wedding-songs'">Most Popular Reggae Wedding
         Songs</button>
       
-      <!-- Add more buttons for other genres -->
-    </div>
+    </div> -->
     <!-- <div>
       <div class="select-wrapper">
         <select id="yearFilter" onchange="getWeddingSongs()">
@@ -254,7 +271,27 @@
     </select>
     <div id="paginationContainer" style="float:right"></div>
   </div> -->
-
+  <% routes.forEach(function(route) { %>
+    <h1><%= route.title %></h1>
+    <div class="container" id="<%= route.name %>Container">
+      <% route.songs.forEach(function(song) { %>
+        <div class="card">
+          <img src="<%= song.imageUrl %>" alt="Song Image">
+          <div class="card-content">
+            <h3 class="card-title" title="<%= song.name %>"><%= song.name %></h3>
+            <p class="card-text">by <%= song.artist %></p>
+          </div>
+          <div class="card-footer">
+            Genre: <%= song.genre ? song.genre : 'NA' %> <br>
+            Year: <%= song.year %>
+          </div>
+        </div>
+      <% }); %>
+      <div class="card see-more-card">
+        <a href="<%= route.path %>">See More</a>
+      </div>
+    </div>
+  <% }); %>
   <script>
     function createCard(song) {
       return `
@@ -336,13 +373,13 @@
           displaySongs(data.songs);
           createPagination(data.totalPages, page);
           // Update h1 text
-          const h1 = $('h1');
-          if (genre && genre !== 'All Genres') {
-            const capitalizedGenre = capitalizeWords(genre);
-            h1.text(`Top ${capitalizedGenre} Wedding Songs`);
-          } else {
-            h1.text('Top Wedding Songs');
-          }
+          // const h1 = $('h1');
+          // if (genre && genre !== 'All Genres') {
+          //   const capitalizedGenre = capitalizeWords(genre);
+          //   h1.text(`Top ${capitalizedGenre} Wedding Songs`);
+          // } else {
+          //   h1.text('Top Wedding Songs');
+          // }
           $('#overlay').hide(); // Hide overlay
         });
     }

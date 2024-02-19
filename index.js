@@ -150,26 +150,30 @@ app.get('/', async (req, res) => {
       return res.status(500).send('Database not connected');
     }
 
-    const songs = await db.collection('songs').find().toArray();
-
-    if (songs.length === 0) {
-      return res.render('index', { message: 'No songs available' });
-    }
-
-    res.render('index', { songs });
+    const genres = ['country', 'r&b', 'hip hop', 'rock', 'disco', 'pop', 'edm'];
+    const routes = await Promise.all(genres.map(async (genre) => {
+    const songs = await getSongsByGenre(genre);
+    return {
+      name: genre,
+      title: `Most Popular ${genre.charAt(0).toUpperCase() + genre.slice(1)} Wedding Songs`,
+      songs: songs,
+      path: `/most-popular-${genre.replace(/&/g, 'and').replace(/\s/g, '-')}-wedding-songs`
+    };
+  }));
+    res.render('index', { routes });
   } catch (error) {
     console.error(error);
     res.status(500).send('An error occurred');
   }
 });
 // Function to fetch songs based on genre
-async function getSongsByGenre(genre) {
+async function getSongsByGenre(genre, limit = 9) {
   try {
     const regex = new RegExp(genre, 'i'); // Create a case-insensitive regex
     const songs = await db.collection('songs')
       .find({ genre: regex }) // Use the regex in the query
       .sort({ popularity: -1 })
-      .limit(10)
+      .limit(limit)
       .toArray();
     return songs;
   } catch (error) {
@@ -180,43 +184,56 @@ async function getSongsByGenre(genre) {
 
 // Routes for each genre
 app.get('/most-popular-country-wedding-songs', async (req, res) => {
-  const songs = await getSongsByGenre('country');
+  const songs = await getSongsByGenre('country',25);
   res.render('songs', { title: 'Most Popular Country Wedding Songs', songs: songs });
 });
 
-app.get('/most-popular-rnb-wedding-songs', async (req, res) => {
-  const songs = await getSongsByGenre('r&b');
+app.get('/most-popular-randb-wedding-songs', async (req, res) => {
+  const songs = await getSongsByGenre('r&b',25);
   res.render('songs', { title: 'Most Popular R&B Wedding Songs', songs: songs });
 });
 
 app.get('/most-popular-hip-hop-wedding-songs', async (req, res) => {
-  const songs = await getSongsByGenre('hip hop');
+  const songs = await getSongsByGenre('hip hop',25);
   res.render('songs', { title: 'Most Popular Hip Hop Wedding Songs', songs: songs });
 });
 
 app.get('/most-popular-rock-wedding-songs', async (req, res) => {
-  const songs = await getSongsByGenre('rock');
+  const songs = await getSongsByGenre('rock',25);
   res.render('songs', { title: 'Most Popular Rock Wedding Songs', songs: songs });
 });
 
-app.get('/most-popular-jazz-wedding-songs', async (req, res) => {
-  const songs = await getSongsByGenre('jazz');
-  res.render('songs', { title: 'Most Popular Jazz Wedding Songs', songs: songs });
+app.get('/most-popular-disco-wedding-songs', async (req, res) => {
+  const songs = await getSongsByGenre('disco',25);
+  res.render('songs', { title: 'Most Popular Disco Wedding Songs', songs: songs });
 });
 
 app.get('/most-popular-pop-wedding-songs', async (req, res) => {
-  const songs = await getSongsByGenre('pop');
+  const songs = await getSongsByGenre('pop',25);
   res.render('songs', { title: 'Most Popular Pop Wedding Songs', songs: songs });
 });
 
-app.get('/most-popular-jazz-wedding-songs', async (req, res) => {
-  const songs = await getSongsByGenre('jazz');
-  res.render('songs', { title: 'Most Popular Jazz Wedding Songs', songs: songs });
-});
-
 app.get('/most-popular-reggae-wedding-songs', async (req, res) => {
-  const songs = await getSongsByGenre('reggae');
+  const songs = await getSongsByGenre('reggae',25);
   res.render('songs', { title: 'Most Popular Reggae Wedding Songs', songs: songs });
 });
+app.get('/most-popular-edm-wedding-songs', async (req, res) => {
+  const songs = await getSongsByGenre('edm',25);
+  res.render('songs', { title: 'Most Popular Edm Wedding Songs', songs: songs });
+});
+// app.get('/genre-song-count', async (req, res) => {
+//   try {
+//     const genreSongCount = await db.collection('songs').aggregate([
+//       { $group: { _id: "$genre", count: { $sum: 1 } } }
+//     ]).toArray();
 
+//     const genresWithLessThan25Songs = genreSongCount.filter(item => item.count < 25);
+//     const genresWithMoreThan25Songs = genreSongCount.filter(item => item.count > 25);
+
+//     res.json({ genresWithLessThan25Songs, genresWithMoreThan25Songs });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send('An error occurred');
+//   }
+// });
 app.listen(9000, () => console.log('App is listening on port 9000'));
