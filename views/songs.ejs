@@ -107,6 +107,9 @@
         </h1>
     </div>
     <div class="container" id="songsContainer">
+        <% if (title !== 'Top Wedding Songs') { %>
+            <iframe src="https://open.spotify.com/embed/playlist/<%= playlistId %>" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+          <% } %>
         <% songs.forEach(function(song) { %>
             <div class="card">
                 <img src="<%= song.imageUrl %>" alt="Song Image">

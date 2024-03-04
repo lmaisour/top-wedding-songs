@@ -14,6 +14,7 @@ console.log(process.env.MONGODB_URL); // should print your MongoDB URL
 const spotifyApi = new SpotifyWebApi({
   clientId: process.env.SPOTIFY_CLIENT_ID,
   clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
+  redirectUri: process.env.SPOTIPY_REDIRECT_URI,
 });
 // Function to retrieve an access token 
 function retrieveAccessToken() {
@@ -33,7 +34,7 @@ function retrieveAccessToken() {
 }
 
 // Retrieve an access token as soon as the app starts 
-retrieveAccessToken();
+//retrieveAccessToken();
 // MongoDB setup
 const url = process.env.MONGODB_URL;
 const dbName = 'weddingSongs';
@@ -84,6 +85,7 @@ app.get('/fetch', async (req, res) => {
         year: new Date(albumResponse.body.release_date).getFullYear(), // Get the release year of the album
         popularity: track.track.popularity,// Save the popularity of the track
         imageUrl: track.track.album.images[0].url, // Save the URL of the album cover image
+        spotifyId: track.track.id,
       };
 
       // Check if the song already exists in the database
@@ -97,6 +99,11 @@ app.get('/fetch', async (req, res) => {
       } else {
         skipCount = skipCount + 1;
         console.log(`${song.name} already exists in db, skipping Song`);
+        if (!songExists.spotifyId) {
+          // If not, update the song to include the spotifyId
+          await db.collection('songs').updateOne({ _id: songExists._id }, { $set: { spotifyId: song.spotifyId } });
+          console.log(`Added spotifyId to ${song.name} in db`);
+        }
       }
     }
   }
@@ -170,6 +177,13 @@ app.get('/', async (req, res) => {
 async function getSongsByGenre(genre, limit = 9) {
   try {
     const regex = new RegExp(genre, 'i'); // Create a case-insensitive regex
+    if(genre=='top'){
+      const songs = await db.collection('songs')
+      .find() // Use the regex in the query
+      .sort({ popularity: -1 })
+      .limit(limit)
+      .toArray();
+    }
     const songs = await db.collection('songs')
       .find({ genre: regex }) // Use the regex in the query
       .sort({ popularity: -1 })
@@ -182,6 +196,69 @@ async function getSongsByGenre(genre, limit = 9) {
   }
 }
 
+async function createPlaylist(title, description) {
+  try {
+    const data = await spotifyApi.createPlaylist(title, {
+      description: description,
+      public: true
+    });
+    return data.body.id;
+  } catch (error) {
+    console.error(`Failed to create playlist ${title}:`, error);
+  }
+}
+app.get('/create-playlist', async (req, res) => {
+  const genres = ['country', 'r&b', 'hip hop', 'rock', 'disco', 'pop', 'edm'];
+  for (let genre of genres) {
+    const songs = await getSongsByGenre(genre, 25);
+    console.log("Songs of genre "+genre,{songs});
+    const title = `Most Popular ${genre.charAt(0).toUpperCase() + genre.slice(1)} Wedding Songs`;
+    const description= "This is a playlist of top wedding songs in "+ genre;
+    console.log(`Processing ${title}...`);
+
+    // Check if the playlist already exists in the database
+    const existingPlaylist = await db.collection('playlists').findOne({ title: title });
+    if (existingPlaylist) {
+      console.log(`Playlist ${title} already exists, skipping...`);
+      continue;
+    }
+
+    
+    const songUris = songs
+  .filter(song => song.spotifyId !== undefined)
+  .map(song => 'spotify:track:' + song.spotifyId);
+    console.log({songUris})
+    // Create a playlist
+    let playlistId;
+try {
+  playlistId = await createPlaylist(title, description);
+} catch (error) {
+  console.error(`Failed to create playlist ${title}:`, error);
+  continue;
+}
+
+if (!playlistId) {
+  console.error(`No response received when creating playlist ${title}`);
+  continue;
+}
+console.log({playlistId});
+// Add tracks to the playlist
+console.log(`Adding tracks to playlist ${title}...`);
+try {
+  console.log({playlistId});
+  await spotifyApi.addTracksToPlaylist(playlistId, songUris);
+} catch (error) {
+  console.error(`Failed to add tracks to playlist ${title}:`, error);
+  continue;
+}
+    // Save the playlist details in the database
+    console.log(`Saving playlist ${title} to the database...`);
+    const collection = db.collection('playlists');
+    await collection.insertOne({ title: title, spotifyId: playlistId });
+
+    console.log(`Finished processing ${title}`);
+  }
+});
 // Routes for each genre
 app.get('/top-wedding-songs', async (req, res) => {
   const songs = await db.collection('songs')
@@ -191,57 +268,73 @@ app.get('/top-wedding-songs', async (req, res) => {
   .toArray();
   res.render('songs', { title: 'Top Wedding Songs', songs: songs });
 });
-app.get('/most-popular-country-wedding-songs', async (req, res) => {
-  const songs = await getSongsByGenre('country',25);
-  res.render('songs', { title: 'Most Popular Country Wedding Songs', songs: songs });
-});
-
 app.get('/most-popular-randb-wedding-songs', async (req, res) => {
-  const songs = await getSongsByGenre('r&b',25);
-  res.render('songs', { title: 'Most Popular R&B Wedding Songs', songs: songs });
+  const title = 'Most Popular R&b Wedding Songs';
+  const songs = await getSongsByGenre('r&b', 24);
+  const playlistId = await getPlaylistId(title);
+  res.render('songs', { title: title, songs: songs, playlistId: playlistId });
 });
 
 app.get('/most-popular-hip-hop-wedding-songs', async (req, res) => {
-  const songs = await getSongsByGenre('hip hop',25);
-  res.render('songs', { title: 'Most Popular Hip Hop Wedding Songs', songs: songs });
+  const title = 'Most Popular Hip hop Wedding Songs';
+  const songs = await getSongsByGenre('hip hop', 24);
+  const playlistId = await getPlaylistId(title);
+  res.render('songs', { title: title, songs: songs, playlistId: playlistId });
 });
 
 app.get('/most-popular-rock-wedding-songs', async (req, res) => {
-  const songs = await getSongsByGenre('rock',25);
-  res.render('songs', { title: 'Most Popular Rock Wedding Songs', songs: songs });
+  const title = 'Most Popular Rock Wedding Songs';
+  const songs = await getSongsByGenre('rock', 24);
+  const playlistId = await getPlaylistId(title);
+  res.render('songs', { title: title, songs: songs, playlistId: playlistId });
 });
 
 app.get('/most-popular-disco-wedding-songs', async (req, res) => {
-  const songs = await getSongsByGenre('disco',25);
-  res.render('songs', { title: 'Most Popular Disco Wedding Songs', songs: songs });
+  const title = 'Most Popular Disco Wedding Songs';
+  const songs = await getSongsByGenre('disco', 24);
+  const playlistId = await getPlaylistId(title);
+  res.render('songs', { title: title, songs: songs, playlistId: playlistId });
 });
 
 app.get('/most-popular-pop-wedding-songs', async (req, res) => {
-  const songs = await getSongsByGenre('pop',25);
-  res.render('songs', { title: 'Most Popular Pop Wedding Songs', songs: songs });
+  const title = 'Most Popular Pop Wedding Songs';
+  const songs = await getSongsByGenre('pop', 24);
+  const playlistId = await getPlaylistId(title);
+  res.render('songs', { title: title, songs: songs, playlistId: playlistId });
 });
 
-app.get('/most-popular-reggae-wedding-songs', async (req, res) => {
-  const songs = await getSongsByGenre('reggae',25);
-  res.render('songs', { title: 'Most Popular Reggae Wedding Songs', songs: songs });
+app.get('/most-popular-country-wedding-songs', async (req, res) => {
+  const title = 'Most Popular Country Wedding Songs';
+  const songs = await getSongsByGenre('country', 24);
+  const playlistId = await getPlaylistId(title);
+  res.render('songs', { title: title, songs: songs, playlistId: playlistId });
 });
+
 app.get('/most-popular-edm-wedding-songs', async (req, res) => {
-  const songs = await getSongsByGenre('edm',25);
-  res.render('songs', { title: 'Most Popular Edm Wedding Songs', songs: songs });
+  const title = 'Most Popular EDM Wedding Songs';
+  const songs = await getSongsByGenre('edm', 24);
+  const playlistId = await getPlaylistId(title);
+  res.render('songs', { title: title, songs: songs, playlistId: playlistId });
 });
-// app.get('/genre-song-count', async (req, res) => {
-//   try {
-//     const genreSongCount = await db.collection('songs').aggregate([
-//       { $group: { _id: "$genre", count: { $sum: 1 } } }
-//     ]).toArray();
-
-//     const genresWithLessThan25Songs = genreSongCount.filter(item => item.count < 25);
-//     const genresWithMoreThan25Songs = genreSongCount.filter(item => item.count > 25);
-
-//     res.json({ genresWithLessThan25Songs, genresWithMoreThan25Songs });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).send('An error occurred');
-//   }
-// });
+async function getPlaylistId(title) {
+  const playlist = await db.collection('playlists').findOne({ title: title });
+  return playlist ? playlist.spotifyId : null;
+}
+app.get('/callback', async (req, res) => {
+  const { code } = req.query;
+  try {
+    const data = await spotifyApi.authorizationCodeGrant(code);
+    const { access_token: accessToken, refresh_token: refreshToken } = data.body;
+    spotifyApi.setAccessToken(accessToken);
+    spotifyApi.setRefreshToken(refreshToken);
+    res.redirect('/');
+  } catch (err) {
+    console.log('Something went wrong!', err);
+  }
+});
+app.get('/login', (req, res) => {
+  const scopes = ['playlist-modify-public'];
+  const authorizeURL = spotifyApi.createAuthorizeURL(scopes);
+  res.redirect(authorizeURL);
+});
 app.listen(9000, () => console.log('App is listening on port 9000'));
