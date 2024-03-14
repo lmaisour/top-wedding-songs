@@ -183,6 +183,7 @@ async function getSongsByGenre(genre, limit = 9) {
       .sort({ popularity: -1 })
       .limit(limit)
       .toArray();
+      return songs;
     }
     const songs = await db.collection('songs')
       .find({ genre: regex }) // Use the regex in the query
@@ -208,12 +209,18 @@ async function createPlaylist(title, description) {
   }
 }
 app.get('/create-playlist', async (req, res) => {
-  const genres = ['country', 'r&b', 'hip hop', 'rock', 'disco', 'pop', 'edm'];
+  const genres = ['top','country', 'r&b', 'hip hop', 'rock', 'disco', 'pop', 'edm'];
   for (let genre of genres) {
     const songs = await getSongsByGenre(genre, 25);
     console.log("Songs of genre "+genre,{songs});
-    const title = `Most Popular ${genre.charAt(0).toUpperCase() + genre.slice(1)} Wedding Songs`;
-    const description= "This is a playlist of top wedding songs in "+ genre;
+    let title;
+    if(genre == 'top'){
+       title = `Top Wedding Songs`;
+    }
+    else{
+       title = `Most Popular ${genre.charAt(0).toUpperCase() + genre.slice(1)} Wedding Songs`;
+    }
+    const description= "This is a playlist of top wedding songs in "+ genre== 'top' ? 'all genres' : genre;
     console.log(`Processing ${title}...`);
 
     // Check if the playlist already exists in the database
@@ -261,12 +268,14 @@ try {
 });
 // Routes for each genre
 app.get('/top-wedding-songs', async (req, res) => {
+  const title = 'Top Wedding Songs';
   const songs = await db.collection('songs')
   .find()
   .sort({ popularity: -1 })
-  .limit(25)
+  .limit(24)
   .toArray();
-  res.render('songs', { title: 'Top Wedding Songs', songs: songs });
+  const playlistId = await getPlaylistId(title);
+  res.render('songs', { title: 'Top Wedding Songs', songs: songs, playlistId: playlistId  });
 });
 app.get('/most-popular-randb-wedding-songs', async (req, res) => {
   const title = 'Most Popular R&b Wedding Songs';
